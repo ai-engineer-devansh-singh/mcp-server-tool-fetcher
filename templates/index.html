@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Tool Lister</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 MCP Tool Lister</h1>
+            <p>Paste your MCP configuration to view available tools</p>
+        </header>
+
+        <div class="content">
+            <div class="input-section">
+                <h2>Configuration</h2>
+                <textarea id="configInput" placeholder='Paste your MCP config here, e.g.:
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}'></textarea>
+                <div class="button-group">
+                    <button id="listToolsBtn" onclick="listTools()">List Tools</button>
+                    <button onclick="clearConfig()">Clear</button>
+                    <button onclick="loadExample()">Load Example</button>
+                </div>
+            </div>
+
+            <div class="output-section">
+                <div id="loading" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Connecting to MCP servers...</p>
+                </div>
+
+                <div id="error" class="hidden error-box"></div>
+
+                <div id="results" class="hidden">
+                    <div class="summary">
+                        <h2>Results</h2>
+                        <div class="stats">
+                            <div class="stat-card">
+                                <span class="stat-value" id="serverCount">0</span>
+                                <span class="stat-label">Servers</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-value" id="toolCount">0</span>
+                                <span class="stat-label">Total Tools</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="toolsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

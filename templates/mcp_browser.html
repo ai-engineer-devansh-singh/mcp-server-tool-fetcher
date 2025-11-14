@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Servers Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .category-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .servers-grid {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .server-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .server-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .server-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .server-checkbox {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .server-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .server-name {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 8px;
+        }
+
+        .server-description {
+            color: #6c757d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .server-config {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .config-title {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .config-code {
+            background: #212529;
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .config-preview {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 30px;
+        }
+
+        .config-preview h3 {
+            margin-bottom: 15px;
+            color: #212529;
+        }
+
+        .selected-count {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .stat-item h3 {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-item p {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .servers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                width: 100%;
+            }
+            
+            .btn {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MCP Servers Browser</h1>
+            <p>Discover, configure, and manage Model Context Protocol servers</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search servers by name or description...">
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="generateConfig()">
+                    📋 Generate Config
+                    <span class="selected-count" id="selectedCount">0</span>
+                </button>
+                <button class="btn btn-secondary" onclick="downloadConfig()">
+                    💾 Download JSON
+                </button>
+                <button class="btn btn-secondary" onclick="clearSelection()">
+                    🔄 Clear All
+                </button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="category-filter" id="categoryFilter">
+                <button class="category-btn active" data-category="all" onclick="filterByCategory('all')">
+                    All Servers
+                </button>
+            </div>
+        </div>
+
+        <div id="configPreview" class="config-preview" style="display: none;">
+            <h3>📝 Generated Configuration</h3>
+            <div class="config-code" id="configOutput"></div>
+            <button class="btn btn-primary" onclick="copyConfig()" style="margin-top: 15px;">
+                📋 Copy to Clipboard
+            </button>
+        </div>
+
+        <div class="servers-grid" id="serversGrid">
+            <!-- Server cards will be loaded here -->
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <h3 id="totalServers">0</h3>
+                <p>Total Servers</p>
+            </div>
+            <div class="stat-item">
+                <h3 id="totalCategories">0</h3>
+                <p>Categories</p>
+            </div>
+            <div class="stat-item">
+                <h3 id="selectedServers">0</h3>
+                <p>Selected</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allServers = {};
+        let selectedServers = new Set();
+        let currentCategory = 'all';
+
+        // Load servers on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadServers();
+            loadCategories();
+            setupSearchListener();
+        });
+
+        async function loadServers() {
+            try {
+                const response = await fetch('/api/servers');
+                allServers = await response.json();
+                displayServers(allServers);
+                updateStats();
+            } catch (error) {
+                console.error('Error loading servers:', error);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+                displayCategories(categories);
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        function displayCategories(categories) {
+            const filterDiv = document.getElementById('categoryFilter');
+            
+            categories.forEach(category => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.dataset.category = category;
+                btn.textContent = category;
+                btn.onclick = () => filterByCategory(category);
+                filterDiv.appendChild(btn);
+            });
+
+            document.getElementById('totalCategories').textContent = categories.length;
+        }
+
+        function displayServers(servers) {
+            const grid = document.getElementById('serversGrid');
+            
+            if (Object.keys(servers).length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No servers found</h3>
+                        <p>Try adjusting your search or category filter</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = '';
+            
+            Object.entries(servers).forEach(([id, config]) => {
+                const card = createServerCard(id, config);
+                grid.appendChild(card);
+            });
+
+            document.getElementById('totalServers').textContent = Object.keys(servers).length;
+        }
+
+        function createServerCard(id, config) {
+            const card = document.createElement('div');
+            card.className = 'server-card';
+            if (selectedServers.has(id)) {
+                card.classList.add('selected');
+            }
+
+            const command = config.command;
+            const args = config.args ? config.args.join(' ') : '';
+            const fullCommand = `${command} ${args}`;
+
+            card.innerHTML = `
+                <input type="checkbox" class="server-checkbox" 
+                       ${selectedServers.has(id) ? 'checked' : ''} 
+                       onchange="toggleServer('${id}')">
+                <span class="server-category">${config.category || 'General'}</span>
+                <div class="server-name">${config.name}</div>
+                <div class="server-description">${config.description}</div>
+                <div class="server-config">
+                    <div class="config-title">Command:</div>
+                    <div class="config-code">${fullCommand}</div>
+                </div>
+                ${config.env ? `
+                <div class="server-config">
+                    <div class="config-title">Environment Variables:</div>
+                    <div class="config-code">${Object.keys(config.env).join('\n')}</div>
+                </div>
+                ` : ''}
+            `;
+
+            return card;
+        }
+
+        function toggleServer(id) {
+            if (selectedServers.has(id)) {
+                selectedServers.delete(id);
+            } else {
+                selectedServers.add(id);
+            }
+            updateSelectedCount();
+            displayServers(currentCategory === 'all' ? allServers : 
+                          Object.fromEntries(Object.entries(allServers)
+                            .filter(([_, config]) => config.category === currentCategory)));
+        }
+
+        function updateSelectedCount() {
+            const count = selectedServers.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('selectedServers').textContent = count;
+        }
+
+        async function generateConfig() {
+            if (selectedServers.size === 0) {
+                alert('Please select at least one server');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/config/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        servers: Array.from(selectedServers)
+                    })
+                });
+
+                const config = await response.json();
+                const configOutput = document.getElementById('configOutput');
+                configOutput.textContent = JSON.stringify(config, null, 2);
+                document.getElementById('configPreview').style.display = 'block';
+                configOutput.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error generating config:', error);
+                alert('Error generating configuration');
+            }
+        }
+
+        async function downloadConfig() {
+            if (selectedServers.size === 0) {
+                alert('Please select at least one server');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/config/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        servers: Array.from(selectedServers)
+                    })
+                });
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'claude_desktop_config.json';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Error downloading config:', error);
+                alert('Error downloading configuration');
+            }
+        }
+
+        function copyConfig() {
+            const configText = document.getElementById('configOutput').textContent;
+            navigator.clipboard.writeText(configText).then(() => {
+                alert('Configuration copied to clipboard!');
+            });
+        }
+
+        function clearSelection() {
+            selectedServers.clear();
+            updateSelectedCount();
+            displayServers(currentCategory === 'all' ? allServers : 
+                          Object.fromEntries(Object.entries(allServers)
+                            .filter(([_, config]) => config.category === currentCategory)));
+            document.getElementById('configPreview').style.display = 'none';
+        }
+
+        async function filterByCategory(category) {
+            currentCategory = category;
+            
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.category === category) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (category === 'all') {
+                displayServers(allServers);
+            } else {
+                try {
+                    const response = await fetch(`/api/servers/category/${category}`);
+                    const servers = await response.json();
+                    displayServers(servers);
+                } catch (error) {
+                    console.error('Error filtering by category:', error);
+                }
+            }
+        }
+
+        function setupSearchListener() {
+            const searchInput = document.getElementById('searchInput');
+            let debounceTimer;
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(async () => {
+                    const query = e.target.value.trim();
+                    
+                    if (query === '') {
+                        displayServers(allServers);
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                        const results = await response.json();
+                        displayServers(results);
+                    } catch (error) {
+                        console.error('Error searching:', error);
+                    }
+                }, 300);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('totalServers').textContent = Object.keys(allServers).length;
+        }
+    </script>
+</body>
+</html>
