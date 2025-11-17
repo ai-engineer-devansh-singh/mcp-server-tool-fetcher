@@ -242,6 +242,154 @@ button:not(#listToolsBtn):hover {
     color: #c62828;
 }
 
+/* AI Assistant Section */
+.ai-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid #e0e0e0;
+}
+
+.ai-subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: -10px;
+    margin-bottom: 20px;
+}
+
+.chat-container {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: #f9f9f9;
+    margin-bottom: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.chat-messages {
+    padding: 15px;
+    min-height: 200px;
+}
+
+.chat-message {
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-message {
+    background: #667eea;
+    color: white;
+    margin-left: 20%;
+}
+
+.assistant-message {
+    background: white;
+    border: 1px solid #e0e0e0;
+    margin-right: 20%;
+}
+
+.error-message {
+    background: #fee;
+    border: 1px solid #fcc;
+    color: #c33;
+}
+
+.message-header {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timing {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+.message-content {
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.tool-calls {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.tool-call-item {
+    margin-bottom: 5px;
+}
+
+.tool-call-badge {
+    display: inline-block;
+    background: #e8eaf6;
+    color: #3f51b5;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+
+.query-input-section {
+    display: flex;
+    gap: 10px;
+}
+
+#queryInput {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+#queryInput:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#sendQueryBtn {
+    padding: 12px 30px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#sendQueryBtn:hover:not(:disabled) {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#sendQueryBtn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
 @media (max-width: 1024px) {
     .content {
         grid-template-columns: 1fr;
@@ -249,5 +397,11 @@ button:not(#listToolsBtn):hover {
     
     #configInput {
         height: 300px;
+    }
+    
+    .user-message,
+    .assistant-message {
+        margin-left: 0;
+        margin-right: 0;
     }
 }

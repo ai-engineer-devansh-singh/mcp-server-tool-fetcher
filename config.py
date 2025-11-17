@@ -8,6 +8,34 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+
+class OpenAIConfig:
+    """Configuration for OpenAI API."""
+    
+    @staticmethod
+    def get_api_key() -> Optional[str]:
+        """
+        Get OpenAI API key from environment.
+        
+        Returns:
+            API key or None if not set
+        """
+        return os.getenv('OPENAI_API_KEY')
+    
+    @staticmethod
+    def is_configured() -> bool:
+        """
+        Check if OpenAI is properly configured.
+        
+        Returns:
+            True if API key is set
+        """
+        return bool(OpenAIConfig.get_api_key())
 
 
 @dataclass

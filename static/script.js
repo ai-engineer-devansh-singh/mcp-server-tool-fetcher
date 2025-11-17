@@ -1,3 +1,7 @@
+// Store current config and tools globally
+let currentConfig = null;
+let currentTools = null;
+
 async function listTools() {
   const configInput = document.getElementById("configInput");
   const config = configInput.value.trim();
@@ -31,6 +35,9 @@ async function listTools() {
     const result = await response.json();
 
     if (result.success) {
+      // Store config and tools for AI queries
+      currentConfig = config;
+      currentTools = result.data.tools;
       displayResults(result.data);
     } else {
       showError(result.error);
@@ -169,3 +176,144 @@ function loadExample() {
     2
   );
 }
+
+// AI Chat Functions
+async function sendQuery() {
+  const queryInput = document.getElementById("queryInput");
+  const query = queryInput.value.trim();
+
+  if (!query) {
+    return;
+  }
+
+  if (!currentConfig || !currentTools) {
+    showError("Please load tools first before asking questions");
+    return;
+  }
+
+  // Clear input and disable send button
+  queryInput.value = "";
+  const sendBtn = document.getElementById("sendQueryBtn");
+  sendBtn.disabled = true;
+  sendBtn.textContent = "Thinking...";
+
+  // Add user message to chat
+  addChatMessage(query, "user");
+
+  try {
+    const response = await fetch("/api/query", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        config: currentConfig,
+        query: query,
+        tools: currentTools,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Add AI response to chat
+      const timing = result.elapsed_time ? ` (${result.elapsed_time}s)` : "";
+      addChatMessage(result.response, "assistant", result.tool_calls, timing);
+    } else {
+      addChatMessage("Sorry, I encountered an error: " + result.error, "error");
+    }
+  } catch (error) {
+    addChatMessage("Network error: " + error.message, "error");
+  } finally {
+    // Re-enable send button
+    sendBtn.disabled = false;
+    sendBtn.textContent = "Send";
+  }
+}
+
+function addChatMessage(content, role, toolCalls = null, timing = "") {
+  const chatMessages = document.getElementById("chatMessages");
+  const messageDiv = document.createElement("div");
+  messageDiv.className = `chat-message ${role}-message`;
+
+  if (role === "user") {
+    messageDiv.innerHTML = `
+      <div class="message-header">You</div>
+      <div class="message-content">${escapeHtml(content)}</div>
+    `;
+  } else if (role === "assistant") {
+    let toolCallsHtml = "";
+    if (toolCalls && toolCalls.length > 0) {
+      toolCallsHtml = '<div class="tool-calls">';
+      toolCalls.forEach((call) => {
+        toolCallsHtml += `
+          <div class="tool-call-item">
+            <span class="tool-call-badge">🔧 ${call.server}.${call.tool}</span>
+          </div>
+        `;
+      });
+      toolCallsHtml += "</div>";
+    }
+
+    messageDiv.innerHTML = `
+      <div class="message-header">AI Assistant${
+        timing ? '<span class="timing">' + timing + "</span>" : ""
+      }</div>
+      ${toolCallsHtml}
+      <div class="message-content">${escapeHtml(content)}</div>
+    `;
+  } else if (role === "error") {
+    messageDiv.innerHTML = `
+      <div class="message-header">Error</div>
+      <div class="message-content">${escapeHtml(content)}</div>
+    `;
+  }
+
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Clear server connection cache
+async function clearCache() {
+  try {
+    const response = await fetch("/api/clear-cache", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Also clear frontend cache
+      currentConfig = null;
+      currentTools = null;
+      hideAll();
+      alert("Cache cleared! Please reload your configuration.");
+    } else {
+      alert("Failed to clear cache: " + result.error);
+    }
+  } catch (error) {
+    alert("Network error: " + error.message);
+  }
+}
+
+// Allow Enter key to send query
+document.addEventListener("DOMContentLoaded", function () {
+  const queryInput = document.getElementById("queryInput");
+  if (queryInput) {
+    queryInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendQuery();
+      }
+    });
+  }
+});

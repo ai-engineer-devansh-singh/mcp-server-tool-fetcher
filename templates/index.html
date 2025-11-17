@@ -29,6 +29,7 @@
                     <button id="listToolsBtn" onclick="listTools()">List Tools</button>
                     <button onclick="clearConfig()">Clear</button>
                     <button onclick="loadExample()">Load Example</button>
+                    <button onclick="clearCache()" title="Clear connection cache">🔄 Reset Cache</button>
                 </div>
             </div>
 
@@ -56,6 +57,21 @@
                     </div>
 
                     <div id="toolsList"></div>
+                    
+                    <!-- AI Assistant Section -->
+                    <div id="aiAssistant" class="ai-section">
+                        <h2>🤖 AI Assistant</h2>
+                        <p class="ai-subtitle">Ask questions and let AI use the tools to help you</p>
+                        
+                        <div id="chatContainer" class="chat-container">
+                            <div id="chatMessages" class="chat-messages"></div>
+                        </div>
+                        
+                        <div class="query-input-section">
+                            <input type="text" id="queryInput" placeholder="Ask me anything... I'll use the tools to help you" />
+                            <button id="sendQueryBtn" onclick="sendQuery()">Send</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
