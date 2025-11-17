@@ -97,12 +97,13 @@ class CommandResolver:
         return None
     
     @staticmethod
-    def resolve_command(command: str) -> str:
+    def resolve_command(command: str, warn_on_missing: bool = False) -> str:
         """
         Resolve command to full path, trying common alternatives.
         
         Args:
             command: Original command from config
+            warn_on_missing: Whether to print warning if command not found
             
         Returns:
             Resolved command path (original if not found)
@@ -123,6 +124,14 @@ class CommandResolver:
                 resolved = CommandResolver.find_command(alt)
                 if resolved:
                     return resolved
+        
+        # Warn if requested and command not found
+        if warn_on_missing:
+            print(f"Warning: Command '{command}' not found in PATH. This may cause connection errors.")
+            if command in ['uvx', 'uv']:
+                print("  To install uv: pip install uv")
+            elif command in ['npx', 'npm']:
+                print("  To install npm: https://nodejs.org/")
         
         # Return original if nothing found (let MCPClient handle the error)
         return command

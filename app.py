@@ -177,10 +177,27 @@ async def fetch_tools(config_json: str) -> dict:
             'success': False,
             'error': f'Configuration error: {str(e)}'
         }
-    except Exception as e:
+    except FileNotFoundError as e:
+        error_msg = str(e)
+        if 'uvx' in error_msg or 'uv' in error_msg:
+            return {
+                'success': False,
+                'error': 'Command "uvx" not found. On deployment platforms like Render, use NPX-based MCP servers instead. See DEPLOYMENT.md for alternatives.'
+            }
         return {
             'success': False,
-            'error': str(e)
+            'error': f'Command not found: {error_msg}'
+        }
+    except Exception as e:
+        error_msg = str(e)
+        if 'No such file or directory' in error_msg and ('uvx' in error_msg or 'uv' in error_msg):
+            return {
+                'success': False,
+                'error': 'Command "uvx" not found. On deployment platforms like Render, use NPX-based MCP servers instead. Examples: npx @modelcontextprotocol/server-fetch'
+            }
+        return {
+            'success': False,
+            'error': error_msg
         }
 
 
