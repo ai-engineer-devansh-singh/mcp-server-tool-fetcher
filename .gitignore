@@ -28,6 +28,10 @@ ENV/
 # Environment Variables
 .env
 
+# Database
+*.db
+test.db
+
 # IDE
 .vscode/
 .idea/
@@ -37,3 +41,6 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log

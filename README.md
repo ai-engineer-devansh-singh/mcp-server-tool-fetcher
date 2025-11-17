@@ -30,12 +30,38 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
+## Project Structure
+
+```
+MCP python/
+├── app.py                 # Flask web application
+├── app_mcp_browser.py    # MCP browser application
+├── main.py               # CLI interactive tool
+├── config.py             # Configuration parser
+├── mcp_client.py         # MCP client wrapper
+├── mcp_servers_config.py # Server configurations
+├── requirements.txt      # Python dependencies
+├── static/               # Web UI assets
+├── templates/            # HTML templates
+├── tests/                # Test suite (see tests/README.md)
+└── README.md            # This file
+```
+
 ## Usage
+
+### Web Application
+
+Run the Flask web application:
+```powershell
+python app.py
+```
+Then open http://localhost:5000 in your browser.
 
 ### Quick Test
 
 Run the simple test with the included example config:
 ```powershell
+cd tests
 python test_simple.py
 ```
 
@@ -146,6 +172,21 @@ The application displays:
 - [MCP Market](https://mcpmarket.com/) - Find more MCP servers
 - [Playwright MCP Server](https://mcpmarket.com/server/playwright-5)
 
+## Additional Features
+
+### Web Search + OpenAI Integration
+See `WEB_SEARCH_README.md` for details on using web search MCP servers with OpenAI API.
+
+### MCP Browser
+See `MCP_BROWSER_README.md` for details on the browser-based interface.
+
+### MCP Server Guide
+See `MCP_SERVER_GUIDE.md` for comprehensive information about MCP servers.
+
+## Testing
+
+All test files are located in the `tests/` directory. See `tests/README.md` for details on running tests.
+
 ## Troubleshooting
 
 ### Connection Issues
@@ -160,5 +201,3 @@ The application displays:
 ## License
 
 MIT License - Feel free to use and modify this project
-
-cd 'd:\Projects\MCP python' ; C:/Users/admin/AppData/Local/Programs/Python/Python313/python.exe app.py
