@@ -187,6 +187,49 @@ See `MCP_SERVER_GUIDE.md` for comprehensive information about MCP servers.
 
 All test files are located in the `tests/` directory. See `tests/README.md` for details on running tests.
 
+## Deployment
+
+### Deploy to Render
+
+This application is ready for easy deployment to Render.
+
+#### Quick Deploy (Using Blueprint)
+
+1. Push your code to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com/)
+3. Click "New" → "Blueprint"
+4. Connect your GitHub repository
+5. Render will automatically detect `render.yaml` and configure your service
+6. Click "Apply" to deploy
+
+#### Manual Deploy
+
+1. Push your code to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com/)
+3. Click "New" → "Web Service"
+4. Connect your GitHub repository
+5. Configure:
+   - **Name**: mcp-tool-lister (or your choice)
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120`
+   - **Plan**: Free
+6. Add Environment Variables (if needed):
+   - `OPENAI_API_KEY`: Your OpenAI API key (optional, for AI features)
+7. Click "Create Web Service"
+
+#### Environment Variables
+
+Optional environment variables you can set on Render:
+- `OPENAI_API_KEY`: For OpenAI integration features
+- `OPENAI_MODEL`: OpenAI model to use (default: gpt-4-turbo-preview)
+
+#### After Deployment
+
+Your application will be available at: `https://your-service-name.onrender.com`
+
+**Note**: The free tier on Render may spin down after inactivity. The first request after inactivity may take 30-60 seconds to respond.
+
 ## Troubleshooting
 
 ### Connection Issues
