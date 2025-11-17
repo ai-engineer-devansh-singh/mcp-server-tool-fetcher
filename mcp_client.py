@@ -163,7 +163,9 @@ class MCPToolLister:
                 await self.client.close_all_sessions()
                 console.print(f"[dim]Closed all connections[/dim]")
             except Exception as e:
-                console.print(f"[red]Error closing connections: {e}[/red]")
+                # Suppress known harmless cleanup warnings from certain servers
+                if "cancel scope" not in str(e).lower():
+                    console.print(f"[red]Error closing connections: {e}[/red]")
             finally:
                 self.client = None
                 self.server_names.clear()

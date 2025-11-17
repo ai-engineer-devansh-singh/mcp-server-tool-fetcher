@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "containerization-assist-mcp"
+      ]
+    },
+    "time": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-time",
+        "--local-timezone=UTC"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
