@@ -5,6 +5,7 @@ import asyncio
 import json
 import time
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from config import ConfigParser, OpenAIConfig
 from mcp_client import MCPToolLister
 from openai import OpenAI
@@ -13,6 +14,7 @@ import hashlib
 from performance_monitor import monitor
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Global cache for persistent connections
 _connection_cache = {}
