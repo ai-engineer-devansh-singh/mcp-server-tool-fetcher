@@ -550,6 +550,310 @@ def clear_cache():
         }), 500
 
 
+@app.route('/api/smart-query', methods=['POST'])
+def smart_query():
+    """
+    Smart routing API endpoint - accepts pre-determined tool selection.
+    Optimized for external routing where tool selection is done elsewhere.
+    
+    Expects JSON: {
+        "configString": "...MCP config JSON string...",
+        "serverName": "server_name",
+        "toolName": "tool_name", 
+        "query": "user query text",
+        "useAI": true/false (optional, default: false)
+    }
+    
+    If useAI=true: Will use OpenAI to process the query with the specific tool
+    If useAI=false: Will directly execute the tool with query as input
+    
+    Returns: {"success": bool, "response": str, "execution_time": float, "error": str}
+    """
+    start_time = time.time()
+    try:
+        data = request.get_json()
+        config_string = data.get('configString', '')
+        server_name = data.get('serverName', '')
+        tool_name = data.get('toolName', '')
+        query = data.get('query', '')
+        use_ai = data.get('useAI', False)
+        
+        # Validation
+        if not config_string:
+            return jsonify({
+                'success': False,
+                'error': 'Missing configString'
+            }), 400
+        
+        if not server_name:
+            return jsonify({
+                'success': False,
+                'error': 'Missing serverName'
+            }), 400
+        
+        if not tool_name:
+            return jsonify({
+                'success': False,
+                'error': 'Missing toolName'
+            }), 400
+        
+        if not query:
+            return jsonify({
+                'success': False,
+                'error': 'Missing query'
+            }), 400
+        
+        # Run async execution
+        if use_ai:
+            result = asyncio.run(smart_query_with_ai(config_string, server_name, tool_name, query))
+        else:
+            result = asyncio.run(smart_query_direct(config_string, server_name, tool_name, query))
+        
+        # Add performance metrics
+        elapsed = time.time() - start_time
+        result['execution_time'] = round(elapsed, 3)
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'execution_time': round(time.time() - start_time, 3)
+        }), 500
+
+
+async def smart_query_direct(config_string: str, server_name: str, tool_name: str, query: str) -> dict:
+    """
+    Execute tool directly with query as input (no AI processing).
+    Fast execution for simple tool calls.
+    """
+    try:
+        # Use persistent connection
+        lister, servers = await get_or_create_connection(config_string)
+        
+        # Verify server exists
+        if server_name not in servers:
+            return {
+                'success': False,
+                'error': f'Server "{server_name}" not found in configuration. Available servers: {list(servers.keys())}'
+            }
+        
+        # Get tool info to understand input schema
+        tools = await lister.get_tools_from_server(server_name)
+        tool_info = next((t for t in tools if t['name'] == tool_name), None)
+        
+        if not tool_info:
+            available_tools = [t['name'] for t in tools]
+            return {
+                'success': False,
+                'error': f'Tool "{tool_name}" not found on server "{server_name}". Available tools: {available_tools}'
+            }
+        
+        # Prepare arguments based on tool's input schema
+        input_schema = tool_info.get('inputSchema', {})
+        properties = input_schema.get('properties', {})
+        
+        # Try to map query to the appropriate parameter
+        arguments = {}
+        if 'query' in properties:
+            arguments['query'] = query
+        elif 'text' in properties:
+            arguments['text'] = query
+        elif 'prompt' in properties:
+            arguments['prompt'] = query
+        elif 'input' in properties:
+            arguments['input'] = query
+        elif 'message' in properties:
+            arguments['message'] = query
+        else:
+            # Use first string property if available
+            for prop_name, prop_schema in properties.items():
+                if prop_schema.get('type') == 'string':
+                    arguments[prop_name] = query
+                    break
+        
+        if not arguments:
+            return {
+                'success': False,
+                'error': f'Could not determine how to pass query to tool. Expected parameters: {list(properties.keys())}',
+                'tool_schema': input_schema
+            }
+        
+        # Execute the tool
+        session = lister.client.get_session(server_name)
+        result = await session.call_tool(tool_name, arguments)
+        
+        # Extract result content
+        response_text = ""
+        if hasattr(result, 'content') and result.content:
+            for item in result.content:
+                if hasattr(item, 'text'):
+                    response_text += item.text
+                else:
+                    response_text += str(item)
+        else:
+            response_text = str(result)
+        
+        return {
+            'success': True,
+            'response': response_text,
+            'server': server_name,
+            'tool': tool_name,
+            'arguments_used': arguments
+        }
+    
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f'Execution error: {str(e)}'
+        }
+
+
+async def smart_query_with_ai(config_string: str, server_name: str, tool_name: str, query: str) -> dict:
+    """
+    Execute tool with AI assistance to interpret query and format response.
+    Uses OpenAI to generate proper arguments and format the result.
+    """
+    try:
+        # Check if OpenAI is configured
+        if not OpenAIConfig.is_configured():
+            return {
+                'success': False,
+                'error': 'OpenAI API key not configured. Set OPENAI_API_KEY or use useAI=false'
+            }
+        
+        # Use persistent connection
+        lister, servers = await get_or_create_connection(config_string)
+        
+        # Verify server exists
+        if server_name not in servers:
+            return {
+                'success': False,
+                'error': f'Server "{server_name}" not found in configuration'
+            }
+        
+        # Get tool info
+        tools = await lister.get_tools_from_server(server_name)
+        tool_info = next((t for t in tools if t['name'] == tool_name), None)
+        
+        if not tool_info:
+            return {
+                'success': False,
+                'error': f'Tool "{tool_name}" not found on server "{server_name}"'
+            }
+        
+        # Build OpenAI tool schema for this specific tool
+        tools_for_openai = [{
+            'type': 'function',
+            'function': {
+                'name': tool_name,
+                'description': tool_info.get('description', 'No description'),
+                'parameters': tool_info.get('inputSchema', {
+                    'type': 'object',
+                    'properties': {}
+                })
+            }
+        }]
+        
+        # Use cached OpenAI client
+        client = get_openai_client()
+        
+        # Create messages
+        messages = [
+            {
+                'role': 'system',
+                'content': f'You are a helpful AI assistant. Use the {tool_name} tool to answer the user\'s question. Provide clear and informative responses based on the tool results.'
+            },
+            {
+                'role': 'user',
+                'content': query
+            }
+        ]
+        
+        # Call OpenAI with the specific tool
+        response = client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=messages,
+            tools=tools_for_openai,
+            tool_choice='auto'
+        )
+        
+        assistant_message = response.choices[0].message
+        
+        # Check if AI wants to call the tool
+        if assistant_message.tool_calls:
+            tool_call = assistant_message.tool_calls[0]
+            arguments = json.loads(tool_call.function.arguments)
+            
+            # Execute the tool
+            session = lister.client.get_session(server_name)
+            result = await session.call_tool(tool_name, arguments)
+            
+            # Extract result content
+            result_text = ""
+            if hasattr(result, 'content') and result.content:
+                for item in result.content:
+                    if hasattr(item, 'text'):
+                        result_text += item.text
+                    else:
+                        result_text += str(item)
+            else:
+                result_text = str(result)
+            
+            # Get final AI response with tool result
+            assistant_dict = {
+                'role': 'assistant',
+                'content': assistant_message.content,
+                'tool_calls': [{
+                    'id': tool_call.id,
+                    'type': 'function',
+                    'function': {
+                        'name': tool_call.function.name,
+                        'arguments': tool_call.function.arguments,
+                    },
+                }],
+            }
+            
+            messages.append(assistant_dict)
+            messages.append({
+                'tool_call_id': tool_call.id,
+                'role': 'tool',
+                'content': result_text,
+            })
+            
+            final_response = client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=messages
+            )
+            
+            final_answer = final_response.choices[0].message.content
+            
+            return {
+                'success': True,
+                'response': final_answer,
+                'server': server_name,
+                'tool': tool_name,
+                'arguments_used': arguments,
+                'raw_result': result_text
+            }
+        else:
+            # AI didn't need to call the tool
+            return {
+                'success': True,
+                'response': assistant_message.content,
+                'server': server_name,
+                'tool': tool_name,
+                'tool_called': False
+            }
+    
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f'AI processing error: {str(e)}'
+        }
+
+
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
     """Get performance statistics."""
