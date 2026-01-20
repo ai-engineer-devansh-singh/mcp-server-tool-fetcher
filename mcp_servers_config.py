@@ -206,7 +206,7 @@ class MCPServerConfig:
         }
     }
     
-    # Python-based MCP Servers
+    # Python-based MCP Servers (both uvx and NPM alternatives for flexibility)
     PYTHON_SERVERS = {
         "fastmcp-demo": {
             "name": "FastMCP Demo",
@@ -224,6 +224,14 @@ class MCPServerConfig:
             "category": "Database",
             "transport": "stdio"
         },
+        "qdrant-npm": {
+            "name": "Qdrant Vector DB (NPM)",
+            "description": "Vector database operations (NPM-based for Render)",
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-qdrant"],
+            "category": "Database",
+            "transport": "stdio"
+        },
         "snowflake": {
             "name": "Snowflake",
             "description": "Query Snowflake data warehouse",
@@ -235,6 +243,17 @@ class MCPServerConfig:
                 "SNOWFLAKE_PASSWORD": "<your-password>"
             },
             "category": "Database",
+            "transport": "stdio"
+        },
+        "anthropic": {
+            "name": "Anthropic",
+            "description": "Use Anthropic's official API for AI-powered operations",
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-anthropic"],
+            "env": {
+                "ANTHROPIC_API_KEY": "<your-api-key>"
+            },
+            "category": "AI/ML",
             "transport": "stdio"
         }
     }
